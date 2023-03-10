@@ -239,7 +239,7 @@ const msgReplace = function (obj, o) {
         if (typeof obj[key] == 'string') {
             obj[key] = obj[key].replace('$msg', 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image));
         } else if (Object.prototype.toString.call(obj[key]) === '[object Object]') {
-            msgReplace(obj[key]);
+            msgReplace(obj[key], o);
         }
     });
 };
