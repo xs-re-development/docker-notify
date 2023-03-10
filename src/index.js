@@ -203,17 +203,12 @@ const checkForUpdates = function () {
                         if (o2.type == 'webHook') {
                             const webHook = config.webHooks[o2.instance];
                             const message = webHook.httpBody;
-                            // Object.keys(message).forEach((key) => {
-                            //     if (typeof message[key] == 'string') {
-                            //         message[key] = message[key].replace('$msg', 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image));
-                            //     }
-                            // });
-
+                            msgReplace(message, o);
                             axios({
                                 method: webHook.httpMethod,
                                 url: webHook.reqUrl,
                                 headers: webHook.httpHeaders,
-                                data: JSON.parse(JSON.stringify(message).replace('$msg', 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image, null, 2)))
+                                data: webHook.httpBody
                             }).then((body) => {
                                 logger.log('WebHook Action for image [' + JSON.stringify(o.job.image) + '] successfully. Response: ', body);
                             }).catch((err) => {
@@ -236,6 +231,16 @@ const checkForUpdates = function () {
         });
     }).catch((err) => {
         logger.error('Cannot open cache: ', err);
+    });
+};
+
+const msgReplace = function (obj, o) {
+    Object.keys(obj).forEach((key) => {
+        if (typeof obj[key] == 'string') {
+            obj[key] = obj[key].replace('$msg', 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image));
+        } else if (Object.prototype.toString.call(obj[key]) === '[object Object]') {
+            msgReplace(obj[key]);
+        }
     });
 };
 
