@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>io.xs.docker</groupId>
+    <artifactId>docker-notify</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0.0</version>
+
+    <name>Docker Notify</name>
+
+    <properties>
+        <jdk>8</jdk>
+        <maven.compiler.source>${jdk}</maven.compiler.source>
+        <maven.compiler.target>${jdk}</maven.compiler.target>
+
+        <!--region plugin versions-->
+        <docker-maven-plugin.version>0.40.1</docker-maven-plugin.version>
+        <flatten-maven-plugin.version>1.2.7</flatten-maven-plugin.version>
+        <takari-lifecycle-plugin.version>2.0.7</takari-lifecycle-plugin.version>
+        <!--endregion-->
+
+        <image.version>1.0.0</image.version>
+
+        <docker.verbose>true</docker.verbose>
+        <docker.useColor>true</docker.useColor>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>${docker-maven-plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>kubile/docker-notify:${image.version}</name>
+                            <build>
+                                <dockerFile>${project.basedir}/Dockerfile</dockerFile>
+                                <squash>true</squash>
+                                <optimise>true</optimise>
+                            </build>
+                        </image>
+                    </images>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
