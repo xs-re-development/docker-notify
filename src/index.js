@@ -10,9 +10,7 @@ addFormats(ajv, ['email', 'hostname', 'uri']);
 
 // Set up a minimal logger
 const dateFormatOptions = {
-    dateStyle: 'medium',
-    timeStyle: 'long',
-    hour12: false
+    dateStyle: 'medium', timeStyle: 'long', hour12: false
 };
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', dateFormatOptions);
@@ -22,8 +20,7 @@ const logger = {
         const args = Array.prototype.slice.call(arguments);
         args.unshift(dateFormatter.format(Date.now()) + ': ');
         console.log.apply(console, args);
-    },
-    error: function () {
+    }, error: function () {
         const args = Array.prototype.slice.call(arguments);
         args.unshift(dateFormatter.format(Date.now()) + ': ');
         console.error.apply(console, args);
@@ -35,8 +32,7 @@ let config;
 
 try {
     config = require('./config.json');
-}
-catch (e) {
+} catch (e) {
     logger.error('Config file error, exiting');
     logger.error(e.message);
     process.exit(1);
@@ -45,7 +41,7 @@ catch (e) {
 // Validate config file with schema validator
 const validate = ajv.compile(schema);
 const valid = validate(config);
-if (!valid){
+if (!valid) {
     logger.error(validate.errors);
     process.exit(2);
 }
@@ -56,8 +52,7 @@ const notifyServices = config.notifyServices;
 // Validate things, that can currently not be validated by json schema
 // these things are: smtp-server referenced in notifyJob is existing and
 // webhooks referenced in notifyJob is existing
-if (!notifyServices.every((o) => o.actions.every((o2) => o2.type === 'webHook' ? config.webHooks[o2.instance] :
-    o2.type === 'mailHook' ? config.smtpServer[o2.instance] : false))){
+if (!notifyServices.every((o) => o.actions.every((o2) => o2.type === 'webHook' ? config.webHooks[o2.instance] : o2.type === 'mailHook' ? config.smtpServer[o2.instance] : false))) {
     logger.error('Mail/Smtp Hooks that are referenced are not defined!');
     process.exit(3);
 }
@@ -69,7 +64,7 @@ config.notifyServices.forEach((o) => {
     res.user = elem.length > 1 ? elem[0] : 'library';
     res.name = elem.length > 1 ? elem[1] : elem[0];
     // get tag if it is set
-    if (res.name.split(':').length > 1){
+    if (res.name.split(':').length > 1) {
         res.tag = res.name.split(':')[1];
         res.name = res.name.split(':')[0];
     }
@@ -78,15 +73,12 @@ config.notifyServices.forEach((o) => {
 
 const mailtransporterMap = new Map();
 
-const mailHookSend = function (smtpserver, recipient, updatedString, msg){
-    if (!mailtransporterMap.has(smtpserver)){
-        mailtransporterMap.set(smtpserver,
-            mailService(config.smtpServer[smtpserver].host, config.smtpServer[smtpserver].port, config.smtpServer[smtpserver].secure,
-                config.smtpServer[smtpserver].username, config.smtpServer[smtpserver].password));
+const mailHookSend = function (smtpserver, recipient, updatedString, msg) {
+    if (!mailtransporterMap.has(smtpserver)) {
+        mailtransporterMap.set(smtpserver, mailService(config.smtpServer[smtpserver].host, config.smtpServer[smtpserver].port, config.smtpServer[smtpserver].secure, config.smtpServer[smtpserver].username, config.smtpServer[smtpserver].password));
     }
 
-    sendMail(msg, mailtransporterMap.get(smtpserver), config.smtpServer[smtpserver].sendername,
-        config.smtpServer[smtpserver].senderadress, recipient, updatedString);
+    sendMail(msg, mailtransporterMap.get(smtpserver), config.smtpServer[smtpserver].sendername, config.smtpServer[smtpserver].senderadress, recipient, updatedString);
 };
 
 // sends an email with a given message to the receiver which is defined in the env
@@ -185,9 +177,7 @@ const checkForUpdates = function () {
             for (const res of checkResult) {
                 let key = res.user + '/' + res.name;
                 const cacheObj = {
-                    user: res.user,
-                    name: res.name,
-                    lastUpdated: res.lastUpdated
+                    user: res.user, name: res.name, lastUpdated: res.lastUpdated
                 };
 
                 if (res.tag) {
@@ -203,15 +193,14 @@ const checkForUpdates = function () {
                         updatedString += ':' + res.tag;
                     }
                     updatedRepos.push({
-                        job: res.job,
-                        updatedString: updatedString
+                        job: res.job, updatedString: updatedString
                     });
                 }
             }
             Cache.writeCache(JSON.stringify(newCache)).then(() => {
                 if (updatedRepos.length > 0) {
                     updatedRepos.forEach((o) => o.job.actions.forEach((o2) => {
-                        if (o2.type == 'webHook'){
+                        if (o2.type == 'webHook') {
                             const webHook = config.webHooks[o2.instance];
                             const message = webHook.httpBody;
                             // Object.keys(message).forEach((key) => {
@@ -224,19 +213,16 @@ const checkForUpdates = function () {
                                 method: webHook.httpMethod,
                                 url: webHook.reqUrl,
                                 headers: webHook.httpHeaders,
-                                data: JSON.stringify(message).replace('$msg', 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image, null, 2))
+                                data: JSON.parse(JSON.stringify(message).replace('$msg', 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image, null, 2)))
                             }).then((body) => {
                                 logger.log('WebHook Action for image [' + JSON.stringify(o.job.image) + '] successfully. Response: ', body);
                             }).catch((err) => {
                                 logger.error('WebHook Action for image [' + JSON.stringify(o.job.image) + '] failed');
                                 logger.log(err);
                             });
-                        }
-                        else if (o2.type == 'mailHook'){
-                            mailHookSend(o2.instance, o2.recipient, o.updatedString, 'Docker image \'' + o.updatedString + '\' was updated:\n'
-                                + JSON.stringify(o.job.image, null, 2));
-                        }
-                        else {
+                        } else if (o2.type == 'mailHook') {
+                            mailHookSend(o2.instance, o2.recipient, o.updatedString, 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image, null, 2));
+                        } else {
                             logger.error('Trying to execute an unknown hook(' + o2.type + '), falling back to printing to console');
                             logger.error('Image: ' + JSON.stringify(o.job.image));
                         }
