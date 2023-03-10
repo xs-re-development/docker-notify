@@ -214,17 +214,17 @@ const checkForUpdates = function () {
                         if (o2.type == 'webHook'){
                             const webHook = config.webHooks[o2.instance];
                             const message = webHook.httpBody;
-                            Object.keys(message).forEach((key) => {
-                                if (typeof message[key] == 'string') {
-                                    message[key] = message[key].replace('$msg', 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image));
-                                }
-                            });
+                            // Object.keys(message).forEach((key) => {
+                            //     if (typeof message[key] == 'string') {
+                            //         message[key] = message[key].replace('$msg', 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image));
+                            //     }
+                            // });
 
                             axios({
                                 method: webHook.httpMethod,
                                 url: webHook.reqUrl,
                                 headers: webHook.httpHeaders,
-                                data: webHook.httpBody
+                                data: JSON.stringify(message).replace('$msg', 'Docker image \'' + o.updatedString + '\' was updated:\n' + JSON.stringify(o.job.image, null, 2))
                             }).then((body) => {
                                 logger.log('WebHook Action for image [' + JSON.stringify(o.job.image) + '] successfully. Response: ', body);
                             }).catch((err) => {
